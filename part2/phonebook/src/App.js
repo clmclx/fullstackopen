@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react'
 import {Filter} from "./components/Filter";
 import {PersonsList} from "./components/PersonsList";
 import {PersonForm} from "./components/PersonForm";
-import {getAll, create, deleteFromdB} from "./services/phonebook";
+import {getAll, create, deleteFromdB, update} from "./services/phonebook";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -31,8 +31,25 @@ const App = () => {
   const handleAddPerson = (event) =>{
       event.preventDefault();
       let newBook = [...persons];
-      if (newBook.map(el=> el.name).includes(newName)){
-          alert(`${newName} is already added to the phonebook`);
+      let currentEntry = newBook.find(el=> el.name === newName);
+
+      if (currentEntry){
+          if (currentEntry.number === newNumber) {
+              alert(`${newName} is already added to the phonebook`);
+          } else {
+              let changeNumber = window.confirm(`${newName} already exists in the phonebook. Do you want to change the number?`);
+              if (changeNumber) {
+                  let idToUpdate = currentEntry.id;
+                  update(idToUpdate, {name: newName, number:newNumber})
+                      .then(returnedPerson=>{
+                          console.log(returnedPerson);
+                          setPersons(persons.map(person => person.id !== idToUpdate? person : returnedPerson));
+                      })
+                      .catch(err=>{
+                          alert("could not update number");
+                      });
+              }
+          }
       } else if(!newName) {
           alert("Please enter the person's name")
       } else if (!newNumber) {
@@ -49,7 +66,6 @@ const App = () => {
   };
 
   const handleFilterChange = (event) => {
-      console.log('filter: ', event.target.value);
       setFilter(event.target.value);
   };
 
